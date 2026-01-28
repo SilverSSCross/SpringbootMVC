@@ -25,8 +25,14 @@ class WebController {
     public String index(Model model)
     {
         model.addAttribute("games", gameRepository.findAll());
-        model.addAttribute("platforms",gameRepository.getPlatforms());
-        System.out.println( gameRepository.getPlatforms() );
+
+        // Obtener plataformas únicas y filtrar nulls
+        List<String> platforms = gameRepository.getPlatforms().stream()
+                .filter(p -> p != null && !p.trim().isEmpty())
+                .sorted()
+                .collect(Collectors.toList());
+
+        model.addAttribute("platforms", platforms);
         return "index2";
     }
 

@@ -3,14 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <title>Biblioteca de Juegos</title>
+    <link rel="stylesheet" th:href="@{/css/style2.css}">
 </head>
 <body>
-    <main>
-        <img th:src="@{/img/internet.png}" alt="">
-        <h1>Listado de juegos</h1>
-        <p>Bienvenido al mundo de desarrolo web</p>
-        <hr>
-        <p th:text="${platforms}"></p>
-    </main>
+<div class="container">
+    <header>
+        <h1>Biblioteca de Juegos</h1>
+        <p class="subtitle">Tu colección personal de videojuegos</p>
+    </header>
+
+    <!-- BARRA DE FILTRADO POR PLATAFORMAS -->
+    <div class="filter-bar">
+        <div class="filter-header">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i> Filtrar por plataforma
+            </div>
+        </div>
+
+        <div class="platforms-container" id="platformsContainer">
+            <!-- Plataformas se cargarán dinámicamente -->
+            <div class="platform-chip" data-platform="all">
+                <i class="fas fa-gamepad"></i> Todas las plataformas
+            </div>
+            <!-- Plataformas dinámicas desde el servidor -->
+            <div th:each="platform : ${platforms}"
+                 class="platform-chip"
+                 th:attr="data-platform=${platform}"
+                 th:text="${platform}">
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <div class="selected-count">
+                <i class="fas fa-list"></i>
+                <span id="selectedCount">0</span> plataformas seleccionadas
+            </div>
+            <div>
+                <button class="filter-btn" id="clearFilters">
+                    <i class="fas fa-times"></i> Limpiar
+                </button>
+                <button class="filter-btn primary" id="applyFilters">
+                    <i class="fas fa-check"></i> Aplicar filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTADOR DE RESULTADOS -->
+    <div style="margin-bottom: 20px; color: #aaa; font-size: 0.95rem;">
+        <i class="fas fa-search"></i>
+        Mostrando <span id="resultsCount">0</span> juegos
+    </div>
+
+    <!-- GRID DE JUEGOS -->
+    <div class="games-grid" id="gamesGrid">
+        <!-- Juegos se cargarán dinámicamente -->
+        <div th:each="game : ${games}"
+             class="game-card"
+             th:attr="data-platform=${game.platform}, data-id=${game.id}"
+             th:classappend="${#strings.toLowerCase(game.platform)}">
+            <div class="game-info">
+                <h3 class="game-title" th:text="${game.title}">Título del juego</h3>
+                <span class="game-platform" th:text="${game.platform}">Plataforma</span>
+                <a th:href="@{'/juego/' + ${game.id}}" class="view-details">
+                    <i class="fas fa-info-circle"></i> Ver detalles
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Biblioteca de Juegos &copy; 2023 - Total de juegos: <span th:text="${games.size()}">0</span></p>
+    </footer>
+</div>
+
+<script>
+    // Datos de los juegos desde Thymeleaf
+    const allGames = document.querySelectorAll('.game-card');
+    const platformChips = document.querySelectorAll('.platform-chip');
+    const platformsContainer = document.getElementById('platformsContainer');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const resultsCount = document.getElementById('resultsCount');
+    const selectedCount = document.getElementById('selectedCount');
+
+    // Estado de los filtros
+    let selectedPlatforms = new Set(['all']);
+    let filteredGames = Array.from(allGames);
+
+    // Inicializar
+    updateCounters();
+
+    // Función para actualizar contadores
+    function updateCounters() {
+        resultsCount.textContent = filteredGames.length;
+        selectedCount.textContent = selectedPlatforms.size;
+
+        // Actualizar chips activos
+        platformChips.forEach(chip => {
+            const platform = chip.getAttribute('data-platform');
+            if (selectedPlatforms.has(platform)) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
+        });
+    }
+
+    // Event listeners para chips de plataformas
+    platformChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            const platform = this.getAttribute('data-platform');
+
+            if (platform === 'all') {
+                // Si clickean "Todas", limpiar otras selecciones
+                selectedPlatforms.clear();
+                selectedPlatforms.add('all');
+            } else {
+                // Remover "all" si seleccionan una plataforma específica
+                selectedPlatforms.delete('all');
+
+                // Alternar selección de la plataforma
+                if (selectedPlatforms.has(platform)) {
+                    selectedPlatforms.delete(platform);
+                    // Si no hay ninguna seleccionada, volver a "all"
+                    if (selectedPlatforms.size === 0) {
+                        selectedPlatforms.add('all');
+                    }
+                } else {
+                    selectedPlatforms.add(platform);
+                }
+            }
+
+            updateCounters();
+        });
+    });
+
+    // Función para aplicar filtros
+    function applyFilters() {
+        filteredGames = Array.from(allGames);
+
+        // Si no hay "all" en las selecciones, filtrar por plataformas
+        if (!selectedPlatforms.has('all')) {
+            filteredGames = filteredGames.filter(game => {
+                const gamePlatform = game.getAttribute('data-platform');
+                return selectedPlatforms.has(gamePlatform);
+            });
+        }
+
+        // Mostrar/ocultar juegos
+        allGames.forEach(game => {
+            if (filteredGames.includes(game)) {
+                game.style.display = 'flex';
+            } else {
+                game.style.display = 'none';
+            }
+        });
+
+        updateCounters();
+    }
+
+    // Event listener para botón aplicar filtros
+    applyFiltersBtn.addEventListener('click', applyFilters);
+
+    // Event listener para limpiar filtros
+    clearFiltersBtn.addEventListener('click', function() {
+        selectedPlatforms.clear();
+        selectedPlatforms.add('all');
+        applyFilters();
+    });
+
+    // Aplicar filtros al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        applyFilters();
+    });
+
+    // Búsqueda en tiempo real (opcional)
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Buscar juegos...';
+    searchInput.style.cssText = `
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        `;
+
+    // Insertar barra de búsqueda después del filter-bar
+    const filterBar = document.querySelector('.filter-bar');
+    filterBar.parentNode.insertBefore(searchInput, filterBar.nextSibling);
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+
+        filteredGames = Array.from(allGames);
+
+        // Filtrar por búsqueda
+        if (searchTerm) {
+            filteredGames = filteredGames.filter(game => {
+                const title = game.querySelector('.game-title').textContent.toLowerCase();
+                const description = game.querySelector('.game-description').textContent.toLowerCase();
+                return title.includes(searchTerm) || description.includes(searchTerm);
+            });
+        }
+
+        // Aplicar filtros de plataforma también
+        if (!selectedPlatforms.has('all')) {
+            filteredGames = filteredGames.filter(game => {
+                const gamePlatform = game.getAttribute('data-platform');
+                return selectedPlatforms.has(gamePlatform);
+            });
+        }
+
+        // Mostrar/ocultar juegos
+        allGames.forEach(game => {
+            if (filteredGames.includes(game)) {
+                game.style.display = 'flex';
+            } else {
+                game.style.display = 'none';
+            }
+        });
+
+        updateCounters();
+    });
+</script>
 </body>
 </html>
