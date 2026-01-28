@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi primera web con SpringBoot</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <main>
+        <img th:src="@{/img/internet.png}" alt="">
+        <h1>Listado de juegos</h1>
+        <p>Bienvenido al mundo de desarrolo web</p>
+        <hr>
+
+        <ul>
+            <li th:each="g : ${games}">
+                <a th:href="@{'/juego/'+${g.id}}" th:text="${g.title}"></a>
+            </li>
+        </ul>
+    </main>
+</body>
+</html>

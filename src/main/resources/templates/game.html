@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi primera web con SpringBoot</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main>
+    <img th:if="${game.id == 1}" th:src="@{https://picsum.photos/100}" alt="">
+    <p th:unless="${game.id == 1}">No hay imagen</p>
+
+    <h1 th:text="${game.title.toUpperCase()+' - '+game.id}"></h1>
+    <p th:text="${game.platform}"></p>
+    <p th:text="${game.year}"></p>
+    <p th:text="${game.description}"></p>
+    <hr>
+    <a href="/">Volver</a>
+</main>
+</body>
+</html>
